@@ -11,25 +11,18 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // =========================
-  // GET USER
-  // =========================
+  // Get logged user
   const getUser = async () => {
     const {
       data: { user },
-      error,
     } = await supabase.auth.getUser();
-
-    if (error) console.log("Auth error:", error.message);
 
     setUser(user);
 
     if (user) fetchBookmarks(user.id);
   };
 
-  // =========================
-  // FETCH BOOKMARKS
-  // =========================
+  // Fetch bookmarks
   const fetchBookmarks = async (userId: string) => {
     const { data, error } = await supabase
       .from("bookmarks")
@@ -37,21 +30,12 @@ export default function Home() {
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.log("Fetch error:", error.message);
-      return;
-    }
-
-    setBookmarks(data || []);
+    if (!error) setBookmarks(data || []);
   };
 
-  // =========================
-  // ADD BOOKMARK
-  // =========================
+  // Add bookmark
   const addBookmark = async () => {
     if (!url || !title) return alert("Enter title + url");
-
-    if (!user) return alert("Login first");
 
     setLoading(true);
 
@@ -65,59 +49,41 @@ export default function Home() {
 
     setLoading(false);
 
-    if (error) {
-      console.log("Insert error:", error.message);
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
     setUrl("");
     setTitle("");
     fetchBookmarks(user.id);
   };
 
-  // =========================
-  // DELETE BOOKMARK (FIXED)
-  // =========================
+  // Delete bookmark
   const deleteBookmark = async (id: string) => {
     setDeletingId(id);
 
     const { error } = await supabase
       .from("bookmarks")
       .delete()
-      .eq("id", id); // ← IMPORTANT: NO .select()
+      .eq("id", id);
 
     setDeletingId(null);
 
-    if (error) {
-      console.log("Delete error:", error.message);
-      alert(error.message);
-      return;
-    }
-
-    fetchBookmarks(user.id);
+    if (error) alert(error.message);
+    else fetchBookmarks(user.id);
   };
 
-  // =========================
-  // LOGIN
-  // =========================
+  // Login
   const login = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
     });
   };
 
-  // =========================
-  // LOGOUT
-  // =========================
+  // Logout
   const logout = async () => {
     await supabase.auth.signOut();
     location.reload();
   };
 
-  // =========================
-  // INITIAL LOAD + REALTIME
-  // =========================
   useEffect(() => {
     getUser();
 
@@ -125,7 +91,11 @@ export default function Home() {
       .channel("realtime-bookmarks")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "bookmarks" },
+        {
+          event: "*",
+          schema: "public",
+          table: "bookmarks",
+        },
         async () => {
           const {
             data: { user },
@@ -141,9 +111,7 @@ export default function Home() {
     };
   }, []);
 
-  // =========================
-  // LOGIN SCREEN
-  // =========================
+  // If not logged in
   if (!user)
     return (
       <div className="flex items-center justify-center h-screen">
@@ -156,9 +124,7 @@ export default function Home() {
       </div>
     );
 
-  // =========================
-  // MAIN UI
-  // =========================
+  // UI
   return (
     <div className="p-10 max-w-3xl mx-auto">
       <div className="flex justify-between mb-6">
@@ -172,7 +138,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* ADD BOOKMARK */}
       <div className="mb-6 space-y-3">
         <input
           type="text"
@@ -199,9 +164,10 @@ export default function Home() {
         </button>
       </div>
 
-      {/* BOOKMARK LIST */}
       {bookmarks.length === 0 ? (
-        <p className="text-center text-gray-500">No bookmarks yet 🚀</p>
+        <p className="text-center text-gray-500">
+          No bookmarks yet 🚀
+        </p>
       ) : (
         <div className="space-y-3">
           {bookmarks.map((bookmark) => (
@@ -210,7 +176,9 @@ export default function Home() {
               className="border p-4 rounded flex justify-between items-center"
             >
               <div>
-                <h2 className="font-semibold text-lg">{bookmark.title}</h2>
+                <h2 className="font-semibold text-lg">
+                  {bookmark.title}
+                </h2>
 
                 <a
                   href={bookmark.url}
