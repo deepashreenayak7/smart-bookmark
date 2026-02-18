@@ -39,13 +39,16 @@ export default function Home() {
 
     setLoading(true);
 
-    await supabase.from("bookmarks").insert([
-      {
-        url,
-        title,
-        user_id: user.id,
-      },
-    ]);
+    await (supabase
+  .from("bookmarks") as any)
+  .insert([
+    {
+      url,
+      title,
+      user_id: user.id,
+    },
+  ]);
+    
 
     setLoading(false);
     setUrl("");
