@@ -1,9 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
-export const supabase =
-  typeof window !== "undefined"
-    ? createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-    : null;
+let supabaseClient: ReturnType<typeof createClient> | null = null;
+
+export function getSupabase() {
+  if (typeof window === "undefined") return null;
+
+  if (!supabaseClient) {
+    supabaseClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+
+  return supabaseClient;
+}

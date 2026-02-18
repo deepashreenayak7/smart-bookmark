@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export default function Home() {
+  const supabase = getSupabase();
+
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [bookmarks, setBookmarks] = useState<any[]>([]);
@@ -13,6 +15,8 @@ export default function Home() {
 
   // Get logged user
   const getUser = async () => {
+    if (!supabase) return;
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -24,6 +28,8 @@ export default function Home() {
 
   // Fetch bookmarks
   const fetchBookmarks = async (userId: string) => {
+    if (!supabase) return;
+
     const { data, error } = await supabase
       .from("bookmarks")
       .select("*")
@@ -36,6 +42,7 @@ export default function Home() {
   // Add bookmark
   const addBookmark = async () => {
     if (!url || !title) return alert("Enter title + url");
+    if (!supabase || !user) return;
 
     setLoading(true);
 
@@ -58,6 +65,8 @@ export default function Home() {
 
   // Delete bookmark
   const deleteBookmark = async (id: string) => {
+    if (!supabase || !user) return;
+
     setDeletingId(id);
 
     const { error } = await supabase
@@ -73,6 +82,8 @@ export default function Home() {
 
   // Login
   const login = async () => {
+    if (!supabase) return;
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
     });
@@ -80,11 +91,15 @@ export default function Home() {
 
   // Logout
   const logout = async () => {
+    if (!supabase) return;
+
     await supabase.auth.signOut();
     location.reload();
   };
 
   useEffect(() => {
+    if (!supabase) return;
+
     getUser();
 
     const channel = supabase
@@ -109,7 +124,7 @@ export default function Home() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [supabase]);
 
   // If not logged in
   if (!user)
